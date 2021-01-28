@@ -50,6 +50,10 @@ module System.Metrics
     , registerDistribution
     , registerGroup
 
+      -- * Unregistering metrics
+      -- $unregistering
+    , unRegisterMetric
+
       -- ** Convenience functions
       -- $convenience
     , createCounter
@@ -635,3 +639,24 @@ readAllRefs m = do
     forM ([(name, ref) | (name, Left ref) <- M.toList m]) $ \ (name, ref) -> do
         val <- sampleOne ref
         return (name, val)
+
+------------------------------------------------------------------------
+-- * Unregistering metrics
+
+-- This is needed in cases, when the register function is called
+-- multiple times. 
+
+-- For eg: Suppose you have a function 'resolveDBConfig' which is called
+-- whenever the configuration of a database is changed. And internally it
+-- also registers a guage using 'registerGauge' which tracks the number
+-- of connections to the DB. Recalling of 'resolveDBConfig' will throw the
+-- error 'alreadyInUseError'. Thus to avoid these cases, the following
+-- function is created to first unregister the metric thus allowing
+-- the user to register the metrics again
+
+-- | Remove the metric from the EKG stateMetric
+unRegisterMetric :: T.Text -> Store -> IO ()
+unRegisterMetric name store = do
+  atomicModifyIORef (storeState store) $ \state@State{..} -> do
+    let !state' = state { stateMetrics =  M.delete name stateMetrics}
+      in (state', ())
