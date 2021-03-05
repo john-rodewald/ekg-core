@@ -52,7 +52,7 @@ module System.Metrics
 
       -- * Unregistering metrics
       -- $unregistering
-    , unRegisterMetric
+    , unregisterMetric
 
       -- ** Convenience functions
       -- $convenience
@@ -655,8 +655,8 @@ readAllRefs m = do
 -- the user to register the metrics again
 
 -- | Remove the metric from the EKG stateMetric
-unRegisterMetric :: T.Text -> Store -> IO ()
-unRegisterMetric name store = do
+unregisterMetric :: T.Text -> Store -> IO ()
+unregisterMetric name store = do
   atomicModifyIORef (storeState store) $ \state@State{..} -> do
     let !state' = state { stateMetrics =  M.delete name stateMetrics}
       in (state', ())
