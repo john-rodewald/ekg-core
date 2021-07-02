@@ -320,6 +320,15 @@ instance GToTags (K1 i T.Text) where
 -- subset can be represented by a function (see `subset`).
 
 -- | Create a new reference to a metric store with restricted scope.
+--
+-- For example:
+--
+-- > data AppMetrics :: Symbol -> MetricType -> Type -> Type where
+-- >   GcSubset ::
+-- >     GcMetrics name metricType tags -> AppMetrics name metricType tags
+-- >
+-- > subset' :: Store AppMetrics -> Store GcMetrics
+-- > subset' = subset GcSubset
 subset
   :: (forall name metricType tags.
       metricsSubset name metricType tags -> metrics name metricType tags)
