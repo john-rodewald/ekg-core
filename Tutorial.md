@@ -160,16 +160,17 @@ app1 = do
    the gauge metric type.
 
 1. The `sampleAll` function iterates through all of the metrics
-   registered to the store, runs their sampling actions, and collects
-   the results. Note that sampling is _not_ atomic: While each metric
-   will be retrieved atomically, the sample is not an atomic snapshot of
-   the system as a whole.
+   registered to the store, runs their sampling actions in turn, and
+   collects the results. Note that sampling is _not_ atomic: While each
+   metric will be retrieved atomically, the sample is not an atomic
+   snapshot of the system as a whole.
 
 ## Adding tags to metrics
 
 `ekg-core` has a multi-dimensional data model, like
 [Prometheus](https://prometheus.io). In this data model, metrics may be
-annotated by sets of key-value pairs called **tags** or **tag sets**.
+annotated by a **tag set**,
+which is a set of key-value pairs called **tags**.
 Tags are useful for convenient filtering and aggregation of metric data.
 In `ekg-core`, metrics are identified by both their name _and_ their tag
 set, so metrics with the same name but different tag sets are distinct
@@ -295,7 +296,7 @@ new metric, the new metric will not be deregistered if the handle is
 used.
 
 Here is an example program that illustrates the reregistration and
-deregistrtation of metrics:
+deregistration of metrics:
 
 ```haskell
 app3 :: IO ()
@@ -333,7 +334,7 @@ app3 = do
         ]
   assert (sample2 == expectedSample2) $ pure ()
 
-  -- Use the dereistration handle to deregister the original metrics.
+  -- Use the deregistration handle to deregister the original metrics.
   deregistrationHandle -- (2)
 
   sample3 <- sampleAll store
@@ -390,12 +391,14 @@ app4 = do
    annotated with the `GcMetrics` metrics specification that
    `registerGcMetrics` expects.
 
-## Sampling subsets of metrics atomically
+## Sampling groups of metrics atomically
 
-Sampling metrics is _not_ atomic; however, subsets of metrics _can_ be
-sampled atomically. This can be useful if
+When you register metrics to a store via the `register` function, the
+sample returned by the `sampleAll` function is _not_ an atomic snapshot
+of those metrics. However, `ekg-core` does provide a way to obtain an
+atomic snapshot of a group of metrics. This can be useful if
 
-- you need a consistent view of several metric or
+- you need a consistent view of several metrics or
 - sampling the metrics together is more efficient.
 
 For example, sampling GC statistics needs to be done atomically or a GC
@@ -403,7 +406,7 @@ might strike in the middle of sampling, rendering the values incoherent.
 Sampling GC statistics is also more efficient if done in "bulk", as the
 run-time system provides a function to sample all GC statistics at once.
 
-A set of metrics can be sampled atomically if
+A group of metrics can be sampled atomically if
 
 - their values are all derived from the same, shared value via pure
   functions, and
@@ -411,7 +414,7 @@ A set of metrics can be sampled atomically if
   if the shared value is a record, the action needs to compute its
   fields atomically).
 
-To register an atomically-sampled set of metrics, use the
+To register an atomically-sampled group of metrics, use the
 `registerGroup` function and the `SamplingGroup` type. Here is an
 example program that does this:
 
@@ -439,7 +442,7 @@ app5 = do
 1. We replicate part of the `GcMetrics` metrics specification from
    `ekg-core`.
 
-1. We create a sampling group with two of the runtime system metrics.
+1. We create a sampling group of two of the runtime system metrics.
 
     Each metric is represented by:
     - a metric class,
