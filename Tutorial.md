@@ -164,6 +164,8 @@ app1 = do
    collects the results. Note that sampling is _not_ atomic: While each
    metric will be retrieved atomically, the sample is not an atomic
    snapshot of the system as a whole.
+   (For more information, see
+   [sampling metrics atomically](#Sampling-groups-of-metrics-atomically))
 
 ## Adding tags to metrics
 
@@ -395,8 +397,12 @@ app4 = do
 
 When you register metrics to a store via the `register` function, the
 sample returned by the `sampleAll` function is _not_ an atomic snapshot
-of those metrics. However, `ekg-core` does provide a way to obtain an
-atomic snapshot of a group of metrics. This can be useful if
+of those metrics. Because metric sampling actions are arbitrary `IO`
+actions, `ekg-core` has no way to ensure that independent metrics are
+sampled atomically.
+
+However, `ekg-core` does provide a way to obtain an atomic snapshot of a
+group of metrics. This can be useful if
 
 - you need a consistent view of several metrics or
 - sampling the metrics together is more efficient.
