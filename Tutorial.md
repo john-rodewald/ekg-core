@@ -104,7 +104,7 @@ them properly later.
 ## Registering and sampling metrics
 
 Now that you have created a metrics specification, you can use it to
-annotate a metrics store and start registering and collecting metrics.
+annotate a metric store and start registering and collecting metrics.
 
 Here is an example program that uses the above specification:
 
@@ -390,7 +390,7 @@ app4 = do
 
 1. In order use `registerGcMetrics` with our metric store, we must use
    the `subset` function to create a new reference to our metric store
-   annotated with the `GcMetrics` metrics specification that
+   restricted to the `GcMetrics` metrics specification that
    `registerGcMetrics` expects.
 
 ## Sampling groups of metrics atomically
@@ -471,8 +471,72 @@ This tutorial introduced and demonstrated the core features of the
 - using pre-defined metrics, and
 - sampling a subset of metrics atomically.
 
-Additional features and details can be found in the Haddocks for the
-`System.Metrics` module.
+Additional features and details can be found in the following documents:
+
+- the Haddocks for the `System.Metrics` module
+- the Appendix section below.
+
+## Appendix
+
+This section contains extra material that is not needed to use the
+`ekg-core` library, but may be useful. This section assumes an
+understanding of the material covered in the tutorial.
+
+### Simulating static metrics
+
+You can register metrics to a metric store so that they cannot be
+removed or modified. Here is an example program that does just that.
+
+```haskell
+-- (1)
+data AppMetrics6 :: Symbol -> MetricType -> Type -> Type where
+  DynamicSubset ::
+    DynamicMetrics name metricType tags -> AppMetrics6 name metricType tags
+  StaticSubset ::
+    StaticMetrics name metricType tags -> AppMetrics6 name metricType tags
+
+data StaticMetrics :: Symbol -> MetricType -> Type -> Type where
+  MyStaticMetric :: StaticMetrics "my_static_metric" 'CounterType ()
+
+data DynamicMetrics :: Symbol -> MetricType -> Type -> Type where
+  MyDynamicMetric :: DynamicMetrics "my_dynamic_metric" 'CounterType ()
+
+app6 :: IO ()
+app6 = do
+  (_store, _staticMetrics) <- do
+    store <- newStore @AppMetrics6
+    -- (2)
+    let staticRef = subset StaticSubset store
+        dynamicRef = subset DynamicSubset store
+    staticMetrics <- registerStaticMetrics staticRef
+    pure (dynamicRef, staticMetrics)
+
+  -- (3)
+  pure ()
+
+registerStaticMetrics :: Store StaticMetrics -> IO Counter.Counter
+registerStaticMetrics store = do
+  counter <- Counter.new
+  _ <- register store $
+        registerCounter MyStaticMetric () (Counter.read counter)
+  pure counter
+```
+
+1. We divide our metrics specification into two subsets: one for static
+   metrics that should not be removed or modified after being
+   registered, and the other for dynamic metrics that may need to be
+   removed or modified.
+
+1. We use the `subset` function twice to create restricted references to
+   the metric store. The first reference is scoped to the static subset,
+   which we use to register the static metrics. The second reference is
+   scoped to the dynamic subset, and is the only reference to the metric
+   store that we expose.
+
+1. At this point, the only reference to the store is scoped to the
+   subset of dynamic metrics. There is no way to register or deregister
+   metrics from the static subset, making those metrics effectively
+   immutable.
 
 ## Tutorial verification
 
@@ -487,4 +551,5 @@ main = do
   app3
   app4
   app5
+  app6
 ```
