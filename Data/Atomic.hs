@@ -24,7 +24,9 @@ import Prelude hiding (read, subtract)
 -- If the machine word size is 64 bits, we can use GHC's atomic primops
 -- (`fetchAddIntArray`) to implement our atomic.
 --
--- We pad to 64-bytes (an x86 cache line) to try to avoid false sharing.
+-- In a contention-heavy micro-benchmark, `fetchAddIntArray` is 5x
+-- faster than `atomicModifyIORefCAS`, and 100x faster than
+-- `atomicModifyIORef`.
 --
 -- Implementation note: We always make sure to interact with the
 -- `MutableByteArray` at element type `Int`.
@@ -35,11 +37,6 @@ import Data.Atomics (fetchAddIntArray, fetchSubIntArray)
 import Data.Int (Int64)
 import Data.Primitive.ByteArray
 import Data.Primitive.MachDeps (sIZEOF_INT)
-import Control.Exception (assert)
-
-sIZEOF_CACHELINE :: Int
-sIZEOF_CACHELINE = 64
-{-# INLINE sIZEOF_CACHELINE #-}
 
 -- | A mutable, atomic integer.
 newtype Atomic = C (MutableByteArray RealWorld)
@@ -47,11 +44,9 @@ newtype Atomic = C (MutableByteArray RealWorld)
 -- | Create a new atomic.
 new :: Int64 -> IO Atomic
 new n = do
-    arr <- newAlignedPinnedByteArray sIZEOF_CACHELINE sIZEOF_CACHELINE
+    arr <- newByteArray sIZEOF_INT
     writeByteArray @Int arr 0 (fromIntegral n)
-    -- out of principle:
-    assert (sIZEOF_INT < sIZEOF_CACHELINE) $
-      pure (C arr)
+    pure (C arr)
 
 read :: Atomic -> IO Int64
 read (C arr) = fromIntegral <$> readByteArray @Int arr 0
