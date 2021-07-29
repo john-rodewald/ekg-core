@@ -84,6 +84,8 @@ myStripe distrib = do
 -- GHC prim ops when holding the lock.
 --
 -- We pad to 64-bytes (an x86 cache line) to try to avoid false sharing.
+-- This uses only 8 more bytes of space, but halves the runtime of a
+-- contention-heavy micro-benchmark.
 
 newtype Stripe = Stripe (MutableByteArray RealWorld)
 
