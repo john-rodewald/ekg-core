@@ -2,9 +2,11 @@ cradle:
   cabal:
     - path: "."
       component: "lib:ekg-core"
+    - path: "./benchmark-lib"
+      component: "lib:ekg-core-benchmark"
     - path: "./test"
       component: "test:ekg-core-test"
-    - path: "./benchmarks"
+    - path: "./benchmark-exe"
       component: "bench:counter"
-    - path: "./benchmarks"
+    - path: "./benchmark-exe"
       component: "bench:distribution"

@@ -54,6 +54,15 @@ library
     System.Metrics.SimpleExample
     System.Metrics.ThreadId
 
+library ekg-core-benchmark
+  import: common-all
+  hs-source-dirs: benchmark-lib
+  exposed-modules:
+    Tasks
+  build-depends:
+    base,
+    ekg-core
+
 benchmark counter
   import: common-all
   main-is: Counter.hs
@@ -61,8 +70,9 @@ benchmark counter
   build-depends:
     base,
     ekg-core,
+    ekg-core-benchmark,
     criterion ^>= 1.5.9.0
-  hs-source-dirs: benchmarks
+  hs-source-dirs: benchmark-exe
   ghc-options: -O2 -threaded
 
 benchmark distribution
@@ -72,8 +82,9 @@ benchmark distribution
   build-depends:
     base,
     ekg-core,
+    ekg-core-benchmark,
     criterion ^>= 1.5.9.0
-  hs-source-dirs: benchmarks
+  hs-source-dirs: benchmark-exe
   ghc-options: -O2 -threaded
 
 test-suite ekg-core-test
@@ -82,12 +93,14 @@ test-suite ekg-core-test
   hs-source-dirs: test
   main-is: Spec.hs
   other-modules:
+    Counter
     Distribution
     State
     Store
   build-depends:
     base,
     ekg-core,
+    ekg-core-benchmark,
     async ^>= 2.2.1,
     containers >= 0.5 && < 0.7,
     generic-random ^>= 1.4.0.0,
@@ -98,7 +111,7 @@ test-suite ekg-core-test
     smallcheck ^>= 1.2.1,
     text < 1.3,
     unordered-containers < 0.3
-  ghc-options: -O2 -threaded
+  ghc-options: -O2 -threaded -with-rtsopts=-N
 
 test-suite ekg-core-tutorial
   import: common-all, library-build-depends
@@ -106,6 +119,7 @@ test-suite ekg-core-tutorial
   main-is: Tutorial.lhs
   build-depends:
     ekg-core,
+    ekg-core-benchmark,
     markdown-unlit
   ghc-options:
     -pgmL markdown-unlit

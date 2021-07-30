@@ -7,6 +7,7 @@ module Distribution
 
 import Data.Foldable (for_, traverse_)
 import qualified System.Metrics.Distribution as Distribution
+import Tasks (addToDistributionWithMultipleWriters)
 import Test.Hspec
 import Test.HUnit
 
@@ -16,6 +17,7 @@ tests =
     it "yields zero values when empty" test_empty
     it "computes its statistics correctly" test_stats
     it "computes its statistics correctly (with `addN`)" test_stats_addN
+    it "is thread-safe" test_threads
 
 -- | Check that an distribution with no values returns zero for all its
 -- statistics.
@@ -100,3 +102,8 @@ test_stats_addN = do
 
 approxEq :: Double -> Double -> Bool
 approxEq x y = abs (x - y) < 1e-12
+
+test_threads :: IO ()
+test_threads = do
+  result <- addToDistributionWithMultipleWriters
+  result `seq` pure ()
