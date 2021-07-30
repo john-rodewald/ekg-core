@@ -27,7 +27,7 @@ import GHC.Generics (Generic)
 import GHC.Stats (RTSStats (..), getRTSStats)
 import GHC.TypeLits (Symbol)
 
--- This pacakge's modules
+-- This package's modules
 import System.Metrics
 import qualified System.Metrics.Counter as Counter
 import qualified System.Metrics.Gauge as Gauge
@@ -395,16 +395,10 @@ app4 = do
 
 ## Sampling groups of metrics atomically
 
-When you register metrics to a store via the `register` function, the
-sample returned by the `sampleAll` function is _not_ an atomic snapshot
-of those metrics. Because metric sampling actions are arbitrary `IO`
-actions, `ekg-core` has no way to ensure that independent metrics are
-sampled atomically.
+`ekg-core` provides a way to obtain atomic snapshots of a group of
+metrics. This can be useful if
 
-However, `ekg-core` does provide a way to obtain an atomic snapshot of a
-group of metrics. This can be useful if
-
-- you need a consistent view of several metrics or
+- you need a consistent view of several metrics, or
 - sampling the metrics together is more efficient.
 
 For example, sampling GC statistics needs to be done atomically or a GC
@@ -412,9 +406,14 @@ might strike in the middle of sampling, rendering the values incoherent.
 Sampling GC statistics is also more efficient if done in "bulk", as the
 run-time system provides a function to sample all GC statistics at once.
 
-A group of metrics can be sampled atomically if
+The usual metric samples obtained through the `sampleAll` function are
+generally _not_ atomic snapshots of their metrics. In general, because
+metric sampling actions can be arbitrary `IO` actions, `ekg-core` has no
+way to ensure that independent metrics are sampled atomically.
 
-- their values are all derived from the same, shared value via pure
+However, a group of metrics can be sampled atomically if
+
+- their values are all derived from a single shared value, via pure
   functions, and
 - the IO action that computes the shared value does so atomically (e.g.
   if the shared value is a record, the action needs to compute its
@@ -485,7 +484,7 @@ understanding of the material covered in the tutorial.
 ### Simulating static metrics
 
 You can register metrics to a metric store so that they cannot be
-removed or modified. Here is an example program that does just that.
+removed or modified. Here is an example program that does this.
 
 ```haskell
 -- (1)
