@@ -336,6 +336,34 @@ subset
   -> Store metrics -- ^ Reference
   -> Store metricsSubset -- ^ Restricted reference
 subset _ = coerce
+-- `coerce` is a safe implementation for this function for the following
+-- reasons.
+--
+-- The only effect of the metrics specification type parameter `metric`
+-- of a store reference `Store metric` is to restrict the operations
+-- that can be performed through the store reference. In particular, the
+-- type parameter makes no guarantees about the contents of the store,
+-- or the operations that have been performed on it. In other words,
+-- there are no store invariants that we are responsible for preserving.
+--
+-- We only need to uphold the contract for this particular function,
+-- which is that the set operations allowed by the `metricsSubset`
+-- specification is a subset of that of the `metrics` specification. In
+-- general, the set of allowed operations of a metrics specification
+-- `metric` is determined by the set of triplets of types `(name,
+-- metricType, tags)` for which there is a value `v :: metric name
+-- metricType tags` in `metric`. Therefore, we only need to show that
+-- for every value `w0 :: metricSubset name metricType value` in
+-- `metricSubset`, there is a value `w1 :: metric name metricType value`
+-- in `metric` with the same type parameters as `w0`. But this is
+-- exactly what is done by a function of type `forall name metricType
+-- tags. metricsSubset name metricType tags -> metrics name metricType
+-- tags`.
+--
+-- Note: This function can be misused by providing an `undefined` value
+-- for the subset function. Doing so yields a function that can set the
+-- type parameter of a `Store` to an arbitrary type (of the proper
+-- kind).
 
 -- ** Common scopes
 
