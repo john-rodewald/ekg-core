@@ -103,7 +103,6 @@ test-suite ekg-core-test
     ekg-core-benchmark,
     async ^>= 2.2.1,
     containers >= 0.5 && < 0.7,
-    generic-random ^>= 1.4.0.0,
     hspec ^>= 2.8.2,
     hspec-smallcheck ^>= 0.5.2,
     HUnit ^>= 1.6.2.0,
